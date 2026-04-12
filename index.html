@@ -11,9 +11,24 @@ button { padding:10px 20px; margin:10px; font-size:18px;}
 
 #ui { position:absolute; display:none; width:100%; height:100%;}
 
-#attack { position:absolute; right:20px; bottom:20px; font-size:20px;}
+/* 攻击键 */
+#attack {
+    position:absolute;
+    right:20px;
+    bottom:20px;
+    font-size:20px;
+    z-index:10;
+}
 
-canvas { background:#4CAF50; display:block; }
+/* ✅ 全屏画布 */
+canvas {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:#4CAF50;
+}
 
 /* 血条 */
 .bar {
@@ -21,6 +36,7 @@ canvas { background:#4CAF50; display:block; }
     width:200px;
     height:20px;
     background:#555;
+    z-index:10;
 }
 #playerBar { top:10px; left:10px;}
 #bossBar { top:40px; left:10px;}
@@ -50,6 +66,7 @@ canvas { background:#4CAF50; display:block; }
     height:100px;
     background:rgba(255,255,255,0.2);
     border-radius:50%;
+    z-index:10;
 }
 
 #joystickStick {
@@ -75,6 +92,7 @@ canvas { background:#4CAF50; display:block; }
 </div>
 
 <div id="ui">
+
 <!-- 血条 -->
 <div class="bar" id="playerBar">
     <div class="fill" id="playerFill"></div>
@@ -93,7 +111,9 @@ canvas { background:#4CAF50; display:block; }
     <div id="joystickStick"></div>
 </div>
 
-<canvas id="game" width="400" height="600"></canvas>
+<!-- ✅ 不再写固定宽高 -->
+<canvas id="game"></canvas>
+
 </div>
 
 <script>
@@ -117,11 +137,22 @@ let player = {x:50,y:300,hp:500,max:500};
 let boss = {x:300,y:300,hp:1000,max:1000};
 
 let ctx, gameStarted=false;
+const game = document.getElementById("game");
+
+/* ✅ 屏幕适配 */
+function resizeCanvas(){
+    game.width = window.innerWidth;
+    game.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
 
 function startGame(){
     menu.style.display="none";
     ui.style.display="block";
     ctx = game.getContext("2d");
+
+    resizeCanvas(); // 启动时执行
+
     gameStarted=true;
     loop();
 }
@@ -165,22 +196,24 @@ function loop(){
         player.x += dx*3;
     }
 
+    // ✅ 防止出屏
+    player.x = Math.max(0, Math.min(game.width-30, player.x));
+
     // Boss攻击
     if(Math.abs(player.x - boss.x)<60){
         player.hp -= 0.5;
         if(player.hp<=0){ alert(text[lang].lose); location.reload(); }
     }
 
-    // 更新血条
+    // 血条
     playerFill.style.width = (player.hp/player.max*100)+"%";
     bossFill.style.width = (boss.hp/boss.max*100)+"%";
 
-    // ✅ 血量数字显示
     playerText.innerText = Math.floor(player.hp) + " / " + player.max;
     bossText.innerText = boss.hp + " / " + boss.max;
 
-    // 绘制
-    ctx.clearRect(0,0,400,600);
+    // 绘制（全屏）
+    ctx.clearRect(0,0,game.width,game.height);
 
     ctx.fillStyle="blue";
     ctx.fillRect(player.x, player.y, 30, 30);
